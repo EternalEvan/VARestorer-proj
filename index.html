@@ -28,24 +28,10 @@
   <script src="./static/js/index.js"></script>
 
   <style>
-    /* Hero background: soft gradient tinted from the teaser image. */
+    /* Hero background: solid dark navy for clean contrast. */
     .hero.varestorer-hero {
-      background: linear-gradient(135deg, #1f2a44 0%, #274060 45%, #3a6078 100%);
-      position: relative;
-      overflow: hidden;
+      background: #1f2a44;
     }
-    .hero.varestorer-hero::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background-image: url("./static/images/teaser.png");
-      background-size: cover;
-      background-position: center;
-      opacity: 0.18;
-      filter: blur(2px);
-      z-index: 0;
-    }
-    .hero.varestorer-hero .hero-body { position: relative; z-index: 1; }
     .hero.varestorer-hero .publication-title { color: #fff; }
     .hero.varestorer-hero .publication-authors,
     .hero.varestorer-hero .publication-venue { color: #f2f2f2; }
@@ -69,8 +55,10 @@
       font-size: 0.88rem;
       border-collapse: collapse;
       width: 100%;
-      max-width: 920px;
     }
+    .results-table.is-wide { max-width: 1280px; }
+    .results-table.is-narrow { max-width: 720px; }
+    .results-table.is-compact { max-width: 620px; }
     .results-table th, .results-table td {
       padding: 0.35em 0.55em;
       text-align: center;
@@ -400,16 +388,16 @@
 
 <!-- Quantitative Results -->
 <section class="section" style="padding-top: 40px;">
-  <div class="container is-max-desktop">
+  <div class="container is-max-widescreen">
     <div class="columns is-centered has-text-centered">
-      <div class="column is-four-fifths">
+      <div class="column">
         <h2 class="title is-3">Quantitative Results</h2>
         <p class="section-note" style="margin-bottom: 1rem;">
           Comparison on synthetic DIV2K-Val and real-world DrealSR / RealSR benchmarks. <span class="best">Best</span> and <span class="second">second-best</span> values are highlighted. The number after each method denotes its inference steps.
         </p>
 
         <div style="overflow-x: auto;">
-        <table class="results-table">
+        <table class="results-table is-wide">
           <thead>
             <tr>
               <th>Dataset</th>
@@ -593,7 +581,7 @@
       <div class="column is-four-fifths">
         <h3 class="title is-4">Parameter &amp; Computation Analysis</h3>
         <div style="overflow-x: auto;">
-        <table class="results-table" style="max-width: 720px;">
+        <table class="results-table is-narrow">
           <thead>
             <tr>
               <th>Method</th>
@@ -671,7 +659,7 @@
         </div>
 
         <div style="overflow-x: auto;">
-        <table class="results-table" style="max-width: 620px;">
+        <table class="results-table is-compact">
           <thead>
             <tr>
               <th>Method</th>
