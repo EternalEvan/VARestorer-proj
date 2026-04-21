@@ -149,6 +149,121 @@
       color: #274060;
     }
     .stat-card .lbl { font-size: 0.85rem; color: #555; margin-top: 0.15rem; }
+
+    /* Before / After interactive slider.  Three instances rendered side-by-side. */
+    .ba-row {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .ba-item {
+      flex: 1 1 0;
+      min-width: 0;
+      max-width: 340px;
+    }
+    .ba-item .ba-title {
+      font-family: 'Google Sans', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #274060;
+      text-align: center;
+      margin-bottom: 0.45rem;
+    }
+    .ba {
+      --ba-pos: 50%;
+      width: 100%;
+    }
+    .ba-frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 9 / 8;
+      overflow: hidden;
+      border-radius: 8px;
+      background: #111;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+      user-select: none;
+      touch-action: none;
+      cursor: ew-resize;
+      outline: none;
+    }
+    .ba-frame:focus-visible {
+      box-shadow: 0 0 0 3px rgba(39, 64, 96, 0.5), 0 2px 12px rgba(0, 0, 0, 0.15);
+    }
+    .ba-frame img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      pointer-events: none;
+      -webkit-user-drag: none;
+    }
+    .ba-before {
+      clip-path: inset(0 calc(100% - var(--ba-pos)) 0 0);
+    }
+    .ba-divider {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: var(--ba-pos);
+      width: 2px;
+      background: #fff;
+      transform: translateX(-1px);
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.35);
+      pointer-events: none;
+    }
+    .ba-handle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #fff;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ba-handle::before,
+    .ba-handle::after {
+      content: "";
+      width: 0;
+      height: 0;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+    }
+    .ba-handle::before {
+      border-right: 6px solid #274060;
+      margin-right: 3px;
+    }
+    .ba-handle::after {
+      border-left: 6px solid #274060;
+      margin-left: 3px;
+    }
+    .ba-hint {
+      text-align: center;
+      font-size: 0.88rem;
+      color: #555;
+      margin-top: 1rem;
+    }
+    .ba-hint .ba-sep {
+      display: inline-block;
+      margin: 0 0.5em;
+      color: #bbb;
+    }
+    .ba-hint b { color: #274060; }
+
+    @media (max-width: 960px) {
+      .ba-item { flex: 1 1 46%; max-width: 420px; }
+    }
+    @media (max-width: 600px) {
+      .ba-item { flex: 1 1 100%; max-width: 480px; }
+    }
   </style>
 </head>
 <body>
@@ -249,8 +364,46 @@
 <section class="hero teaser">
   <div class="container is-max-desktop">
     <div class="hero-body" style="padding-top: 2.4rem; padding-bottom: 1.6rem;">
-      <img src="./static/images/teaser.png" alt="VARestorer teaser">
-      <h2 class="subtitle has-text-centered" style="margin-top: 1rem;">
+      <div class="ba-row" role="group"
+           aria-label="Interactive before / after comparisons across three scenes">
+        <figure class="ba-item">
+          <figcaption class="ba-title">Street Scene</figcaption>
+          <div class="ba">
+            <div class="ba-frame" tabindex="0"
+                 aria-label="Street scene: drag to compare real input and VARestorer output">
+              <img class="ba-after"  src="./static/images/scene_car_hq.png" alt="VARestorer output for the street scene">
+              <img class="ba-before" src="./static/images/scene_car_lq.png" alt="Real degraded input for the street scene">
+              <div class="ba-divider"><div class="ba-handle" aria-hidden="true"></div></div>
+            </div>
+          </div>
+        </figure>
+        <figure class="ba-item">
+          <figcaption class="ba-title">Landscape</figcaption>
+          <div class="ba">
+            <div class="ba-frame" tabindex="0"
+                 aria-label="Landscape: drag to compare real input and VARestorer output">
+              <img class="ba-after"  src="./static/images/scene_field_hq.png" alt="VARestorer output for the landscape">
+              <img class="ba-before" src="./static/images/scene_field_lq.png" alt="Real degraded input for the landscape">
+              <div class="ba-divider"><div class="ba-handle" aria-hidden="true"></div></div>
+            </div>
+          </div>
+        </figure>
+        <figure class="ba-item">
+          <figcaption class="ba-title">Corgi Portrait</figcaption>
+          <div class="ba">
+            <div class="ba-frame" tabindex="0"
+                 aria-label="Corgi portrait: drag to compare real input and VARestorer output">
+              <img class="ba-after"  src="./static/images/scene_corgi_hq.png" alt="VARestorer output for the corgi portrait">
+              <img class="ba-before" src="./static/images/scene_corgi_lq.png" alt="Real degraded input for the corgi portrait">
+              <div class="ba-divider"><div class="ba-handle" aria-hidden="true"></div></div>
+            </div>
+          </div>
+        </figure>
+      </div>
+      <p class="ba-hint">
+        Left: <b>real degraded input</b><span class="ba-sep">|</span>Right: <b>VARestorer</b> one-step output<span class="ba-sep">|</span>Drag the white handle or use <kbd>&larr;</kbd>&nbsp;/&nbsp;<kbd>&rarr;</kbd> to compare.
+      </p>
+      <h2 class="subtitle has-text-centered" style="margin-top: 1.2rem;">
         <span class="dnerf"><b>VARestorer</b></span> restores severely degraded real-world images
         into sharp, photorealistic outputs in a
         <b>single forward step</b>, by distilling a pre-trained text-to-image
@@ -808,6 +961,63 @@
     </div>
   </div>
 </footer>
+
+<script>
+  // Before / after sliders: each .ba instance is fully independent.
+  (function () {
+    document.querySelectorAll('.ba').forEach(function (root) {
+      var frame = root.querySelector('.ba-frame');
+      if (!frame) return;
+
+      root.style.setProperty('--ba-pos', '50%');
+
+      function setPos(pct) {
+        pct = Math.max(0, Math.min(100, pct));
+        root.style.setProperty('--ba-pos', pct + '%');
+      }
+
+      function updateFromEvent(ev) {
+        var rect = frame.getBoundingClientRect();
+        var clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+        setPos(((clientX - rect.left) / rect.width) * 100);
+      }
+
+      var dragging = false;
+
+      frame.addEventListener('mousedown', function (ev) {
+        dragging = true;
+        updateFromEvent(ev);
+        ev.preventDefault();
+      });
+      frame.addEventListener('touchstart', function (ev) {
+        dragging = true;
+        updateFromEvent(ev);
+      }, { passive: true });
+
+      window.addEventListener('mousemove', function (ev) {
+        if (dragging) updateFromEvent(ev);
+      });
+      window.addEventListener('touchmove', function (ev) {
+        if (dragging) updateFromEvent(ev);
+      }, { passive: true });
+
+      window.addEventListener('mouseup',  function () { dragging = false; });
+      window.addEventListener('touchend', function () { dragging = false; });
+
+      // Click-to-jump on the frame itself.
+      frame.addEventListener('click', updateFromEvent);
+
+      // Keyboard when the frame is focused.
+      frame.addEventListener('keydown', function (ev) {
+        var cur = parseFloat(getComputedStyle(root).getPropertyValue('--ba-pos')) || 50;
+        if (ev.key === 'ArrowLeft')  { setPos(cur - 3); ev.preventDefault(); }
+        if (ev.key === 'ArrowRight') { setPos(cur + 3); ev.preventDefault(); }
+        if (ev.key === 'Home')       { setPos(0);       ev.preventDefault(); }
+        if (ev.key === 'End')        { setPos(100);     ev.preventDefault(); }
+      });
+    });
+  })();
+</script>
 
 </body>
 </html>
