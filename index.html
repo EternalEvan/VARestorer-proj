@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="VARestorer distills a pre-trained text-to-image visual autoregressive (VAR) model into a one-step real-world image super-resolution framework with distribution matching and cross-scale pyramid conditioning. ICLR 2026.">
+  <meta name="keywords" content="VARestorer, Visual Autoregressive, VAR, Image Super-Resolution, Real-ISR, Distillation, ICLR 2026">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VARestorer: One-Step VAR Distillation for Real-World Image Super-Resolution</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="icon" href="./static/images/favicon.ico" type="image/x-icon">
+  <link rel="shortcut icon" href="./static/images/favicon.ico" type="image/x-icon">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+
+  <style>
+    /* Hero background: soft gradient tinted from the teaser image. */
+    .hero.varestorer-hero {
+      background: linear-gradient(135deg, #1f2a44 0%, #274060 45%, #3a6078 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero.varestorer-hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: url("./static/images/teaser.png");
+      background-size: cover;
+      background-position: center;
+      opacity: 0.18;
+      filter: blur(2px);
+      z-index: 0;
+    }
+    .hero.varestorer-hero .hero-body { position: relative; z-index: 1; }
+    .hero.varestorer-hero .publication-title { color: #fff; }
+    .hero.varestorer-hero .publication-authors,
+    .hero.varestorer-hero .publication-venue { color: #f2f2f2; }
+    .hero.varestorer-hero .publication-authors a { color: #9dd9ff !important; }
+
+    .venue-badge {
+      display: inline-block;
+      margin-top: 0.75rem;
+      padding: 0.2em 0.9em;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: 999px;
+      color: #fff;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      font-size: 0.9rem;
+    }
+
+    /* Quantitative results tables. */
+    .results-table {
+      margin: 0 auto;
+      font-size: 0.88rem;
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 920px;
+    }
+    .results-table th, .results-table td {
+      padding: 0.35em 0.55em;
+      text-align: center;
+      border-bottom: 1px solid #e4e4e4;
+    }
+    .results-table thead th {
+      background: #f4f4f6;
+      font-weight: 600;
+      border-bottom: 2px solid #c8c8c8;
+    }
+    .results-table .dataset-cell {
+      text-align: left;
+      font-weight: 600;
+      background: #fafafa;
+      border-right: 1px solid #e4e4e4;
+    }
+    .results-table .method-cell { text-align: left; }
+    .results-table .best { color: #e74c3c; font-weight: 600; }
+    .results-table .second { color: #3498db; font-weight: 600; }
+    .results-table tr.ours td { background: #fff7ea; }
+    .results-table tr.ours .method-cell { font-weight: 700; }
+
+    .table-caption {
+      margin: 0.6rem auto 1.4rem auto;
+      max-width: 820px;
+      font-size: 0.92rem;
+      color: #555;
+      text-align: justify;
+    }
+
+    .figure-caption {
+      font-size: 0.95rem;
+      color: #444;
+      text-align: justify;
+      margin-top: 0.6rem;
+    }
+
+    .section-note {
+      font-size: 0.92rem;
+      color: #555;
+    }
+
+    .link-block a.is-hf {
+      background: #ffb300;
+      border-color: #ffb300;
+      color: #222;
+    }
+    .link-block a.is-hf:hover { background: #ffca3a; border-color: #ffca3a; }
+
+    .method-card {
+      background: #fafafa;
+      border: 1px solid #ececec;
+      border-radius: 10px;
+      padding: 1.1rem 1.3rem;
+      margin-bottom: 1rem;
+      text-align: left;
+    }
+    .method-card h4 {
+      font-family: 'Google Sans', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #222;
+      margin-bottom: 0.4rem;
+    }
+    .method-card p { margin: 0; color: #333; }
+
+    .stat-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .stat-card {
+      flex: 1 1 180px;
+      max-width: 220px;
+      background: #fff;
+      border: 1px solid #eaeaea;
+      border-radius: 10px;
+      padding: 1rem 0.75rem;
+      text-align: center;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+    .stat-card .num {
+      font-family: 'Google Sans', sans-serif;
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: #274060;
+    }
+    .stat-card .lbl { font-size: 0.85rem; color: #555; margin-top: 0.15rem; }
+  </style>
+</head>
+<body>
+
+<section class="hero varestorer-hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">
+            <img src="./static/images/logo.png" alt="VARestorer Logo"
+                 style="height: 1.3em; vertical-align: -0.3em; margin: 0 0.15em;">
+            VARestorer: One-Step VAR Distillation for<br>Real-World Image Super-Resolution
+          </h1>
+
+          <div class="venue-badge">ICLR 2026</div>
+
+          <div class="is-size-5 publication-authors" style="margin-top: 1.4rem;">
+            <span class="author-block">
+              <a href="https://eternalevan.github.io/">Yixuan Zhu</a><sup>*</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://github.com/cyp336/">Shilin Ma</a><sup>*</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://howlin-wang.github.io/">Haolin Wang</a>,
+            </span>
+            <span class="author-block">
+              <a href="https://rammusleo.github.io/">Ao Li</a>,
+            </span>
+            <span class="author-block">
+              Yanzhe Jing,
+            </span>
+            <span class="author-block">
+              <a href="https://andytang15.github.io/">Yansong Tang</a><sup>&#10013;</sup>,
+            </span>
+            <span class="author-block">
+              Lei Chen,
+            </span>
+            <span class="author-block">
+              <a href="http://ivg.au.tsinghua.edu.cn/Jiwen_Lu/">Jiwen Lu</a>,
+            </span>
+            <span class="author-block">
+              <a href="https://scholar.google.com/citations?user=6a79aPwAAAAJ&hl=en">Jie Zhou</a>
+            </span>
+          </div>
+
+          <div class="is-size-5 publication-authors" style="margin-top: 0.4rem;">
+            <span class="author-block">Tsinghua University</span>
+          </div>
+
+          <div class="is-size-6 publication-authors" style="margin-top: 0.2rem; color: #d9d9d9;">
+            <sup>*</sup>Equal contribution &nbsp;&nbsp; <sup>&#10013;</sup>Corresponding author
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <span class="link-block">
+                <a href="https://openreview.net/pdf?id=T2Oihh7zN8"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon"><i class="fas fa-file-pdf"></i></span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="#"
+                   class="external-link button is-normal is-rounded is-dark"
+                   onclick="return false;"
+                   title="arXiv link coming soon"
+                   style="opacity: 0.55; cursor: not-allowed;">
+                  <span class="icon"><i class="ai ai-arxiv"></i></span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://github.com/EternalEvan/VARestorer"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon"><i class="fab fa-github"></i></span>
+                  <span>Code</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://huggingface.co/EternalEvan/VARestorer"
+                   class="external-link button is-normal is-rounded is-hf">
+                  <span class="icon"><i class="fas fa-cloud-download-alt"></i></span>
+                  <span>Model</span>
+                </a>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Teaser -->
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body" style="padding-top: 2.4rem; padding-bottom: 1.6rem;">
+      <img src="./static/images/teaser.png" alt="VARestorer teaser">
+      <h2 class="subtitle has-text-centered" style="margin-top: 1rem;">
+        <span class="dnerf"><b>VARestorer</b></span> restores severely degraded real-world images
+        into sharp, photorealistic outputs in a
+        <b>single forward step</b>, by distilling a pre-trained text-to-image
+        <b>Visual Autoregressive</b> model.
+      </h2>
+
+      <!-- Headline stats -->
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="num">1 step</div>
+          <div class="lbl">one-pass inference</div>
+        </div>
+        <div class="stat-card">
+          <div class="num">10&times;</div>
+          <div class="lbl">faster than VAR baseline</div>
+        </div>
+        <div class="stat-card">
+          <div class="num">27.3M</div>
+          <div class="lbl">trainable params (1.2%)</div>
+        </div>
+        <div class="stat-card">
+          <div class="num">0.23 s</div>
+          <div class="lbl">per 512&times;512 image</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Abstract -->
+<section class="section hero is-light" style="padding-top: 30px;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Recent advancements in visual autoregressive models (VAR) have demonstrated their
+            effectiveness in image generation, highlighting their potential for real-world image
+            super-resolution (Real-ISR). However, adapting VAR for ISR presents critical challenges.
+            The next-scale prediction mechanism, constrained by causal attention, fails to fully
+            exploit global low-quality (LQ) context, resulting in blurry and inconsistent
+            high-quality (HQ) outputs. Additionally, error accumulation in the iterative prediction
+            severely degrades coherence in the ISR task. To address these issues, we propose
+            <b>VARestorer</b>, a simple yet effective distillation framework that transforms a
+            pre-trained text-to-image VAR model into a <b>one-step</b> ISR model.
+          </p>
+          <p>
+            By leveraging <b>distribution matching</b>, our method eliminates the need for
+            iterative refinement, significantly reducing error propagation and inference time.
+            Furthermore, we introduce <b>pyramid image conditioning with cross-scale attention</b>,
+            which enables bidirectional scale-wise interactions and fully utilizes the input image
+            information while adapting to the autoregressive mechanism. This prevents later LQ
+            tokens from being overlooked in the transformer. By fine-tuning only <b>1.2%</b> of
+            the model parameters through parameter-efficient adapters, our method maintains the
+            expressive power of the original VAR model while significantly enhancing efficiency.
+            Extensive experiments show that VARestorer achieves state-of-the-art performance with
+            <b>72.32 MUSIQ</b> and <b>0.7669 CLIPIQA</b> on DIV2K, while accelerating inference by
+            <b>10&times;</b> compared to conventional VAR inference.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Pipeline -->
+<section class="section" style="padding-top: 40px;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Framework</h2>
+        <img src="./static/images/pipeline.png" alt="VARestorer framework">
+        <h2 class="subtitle is-6 has-text-centered">
+          <div class="figure-caption">
+            <b>Overview of VARestorer.</b> (a) VARestorer employs a <b>VAR distillation</b>
+            framework for real-ISR. During training, we use a pre-trained text-to-image VAR as
+            the <b>teacher</b> to predict high-quality tokens and minimize a token-level KL
+            divergence against the one-step <b>student</b> model. (b) To fully exploit the LQ
+            input, we introduce <b>cross-scale pyramid conditioning</b> that lets the student
+            apply <b>full attention</b> across features produced by the multi-scale VAE. At
+            inference, VARestorer generates high-quality results in a single step.
+          </div>
+        </h2>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Method -->
+<section class="section hero is-light" style="padding-top: 40px;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Key Ideas</h2>
+
+        <div class="method-card">
+          <h4>1. One-step VAR Distillation via Distribution Matching</h4>
+          <p>
+            Multi-step VAR inference suffers from severe <b>error accumulation</b> on ISR, where
+            the output must precisely align with the input content. We distill the
+            autoregressive teacher \(F_{\mathcal{T}}\) into a one-step student
+            \(F_{\mathcal{S}}\) by aligning their <b>token-level distributions</b> across all
+            scales with a KL objective
+            \(\mathcal{L}_{\text{KL}}=\sum_k \mathrm{KL}\bigl(p_{\mathcal{T}}(r_k\mid r_{\mathrm{HQ},&lt;k})\,\|\,p_{\mathcal{S}}(\hat r_k\mid r_{\mathrm{LQ}})\bigr)\),
+            combined with perceptual and MSE losses. The student learns a direct one-pass
+            mapping from LQ input to all HQ tokens, eliminating iterative error propagation.
+          </p>
+        </div>
+
+        <div class="method-card">
+          <h4>2. Cross-scale Pyramid Conditioning</h4>
+          <p>
+            A fine-tuned VAE encoder produces a <b>multi-scale token pyramid</b> of the LQ
+            image. We replace VAR's block-wise <b>causal attention</b> with
+            <b>full cross-scale attention</b>, letting coarse structures and fine textures
+            reinforce each other bidirectionally. This preserves the pre-trained VAR's
+            architecture while fully exploiting LQ conditioning signals at every scale.
+          </p>
+        </div>
+
+        <div class="method-card">
+          <h4>3. Parameter-efficient Adaptation</h4>
+          <p>
+            We inject <b>LoRA</b> adapters (rank 32) into the cross-/self-attention modules and
+            freeze the rest of the VAR backbone. Only <b>27.3M</b> parameters (<b>1.2%</b> of
+            the Infinity-2B transformer) are trainable, retaining the generative prior while
+            enabling fast adaptation to the ISR task.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Quantitative Results -->
+<section class="section" style="padding-top: 40px;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Quantitative Results</h2>
+        <p class="section-note" style="margin-bottom: 1rem;">
+          Comparison on synthetic DIV2K-Val and real-world DrealSR / RealSR benchmarks. <span class="best">Best</span> and <span class="second">second-best</span> values are highlighted. The number after each method denotes its inference steps.
+        </p>
+
+        <div style="overflow-x: auto;">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Dataset</th>
+              <th>Method</th>
+              <th>PSNR&uarr;</th>
+              <th>SSIM&uarr;</th>
+              <th>LPIPS&darr;</th>
+              <th>MANIQA&uarr;</th>
+              <th>MUSIQ&uarr;</th>
+              <th>NIQE&darr;</th>
+              <th>CLIPIQA&uarr;</th>
+              <th>LIQE&uarr;</th>
+              <th>QALIGN&uarr;</th>
+              <th>FID&darr;</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- DIV2K-Val -->
+            <tr>
+              <td rowspan="8" class="dataset-cell">DIV2K-Val</td>
+              <td class="method-cell">DiffBIR-50</td>
+              <td>21.48</td><td>0.5050</td><td>0.3670</td>
+              <td>0.5664</td><td>69.87</td><td>5.003</td>
+              <td>0.7303</td><td>4.346</td><td>4.070</td><td>32.75</td>
+            </tr>
+            <tr>
+              <td class="method-cell">SeeSR-50</td>
+              <td>21.97</td><td>0.5673</td><td>0.3193</td>
+              <td>0.5036</td><td>68.67</td><td>4.808</td>
+              <td>0.6936</td><td>4.274</td><td>4.035</td><td class="second">25.90</td>
+            </tr>
+            <tr>
+              <td class="method-cell">PASD-20</td>
+              <td>22.31</td><td>0.5675</td><td>0.3296</td>
+              <td>0.4371</td><td>67.78</td><td class="second">4.581</td>
+              <td>0.6459</td><td>3.947</td><td>3.895</td><td>35.47</td>
+            </tr>
+            <tr>
+              <td class="method-cell">ResShift-15</td>
+              <td class="second">22.66</td><td class="best">0.5888</td><td class="best">0.3077</td>
+              <td>0.3693</td><td>58.90</td><td>6.916</td>
+              <td>0.5715</td><td>3.082</td><td>3.309</td><td>30.81</td>
+            </tr>
+            <tr>
+              <td class="method-cell">OSEDiff-1</td>
+              <td>22.06</td><td>0.5735</td><td class="second">0.2942</td>
+              <td>0.4410</td><td>67.96</td><td>4.711</td>
+              <td>0.6680</td><td>4.117</td><td>3.926</td><td>26.34</td>
+            </tr>
+            <tr>
+              <td class="method-cell">SinSR-1</td>
+              <td class="best">22.52</td><td>0.5680</td><td>0.3240</td>
+              <td>0.4216</td><td>62.77</td><td>6.005</td>
+              <td>0.6483</td><td>3.493</td><td>3.553</td><td>35.45</td>
+            </tr>
+            <tr>
+              <td class="method-cell">VARSR-10</td>
+              <td>22.41</td><td>0.5724</td><td>0.3177</td>
+              <td class="second">0.5173</td><td class="second">71.48</td><td>5.977</td>
+              <td class="second">0.7330</td><td class="second">4.282</td><td>3.853</td><td>33.86</td>
+            </tr>
+            <tr class="ours">
+              <td class="method-cell">VARestorer-1</td>
+              <td>21.08</td><td>0.5355</td><td>0.3131</td>
+              <td class="best">0.5590</td><td class="best">72.32</td><td class="best">4.410</td>
+              <td class="best">0.7669</td><td class="best">4.664</td><td class="best">4.363</td><td>31.11</td>
+            </tr>
+
+            <!-- DrealSR -->
+            <tr>
+              <td rowspan="8" class="dataset-cell">DrealSR</td>
+              <td class="method-cell">DiffBIR-50</td>
+              <td>24.05</td><td>0.5831</td><td>0.4669</td>
+              <td>0.5543</td><td>66.14</td><td>6.329</td>
+              <td>0.7072</td><td>4.101</td><td>3.734</td><td>180.4</td>
+            </tr>
+            <tr>
+              <td class="method-cell">SeeSR-50</td>
+              <td>25.82</td><td>0.7405</td><td>0.3174</td>
+              <td>0.5128</td><td>65.09</td><td>6.407</td>
+              <td>0.6905</td><td>4.126</td><td>3.754</td><td class="second">147.3</td>
+            </tr>
+            <tr>
+              <td class="method-cell">PASD-20</td>
+              <td class="best">26.14</td><td class="second">0.7466</td><td class="second">0.3081</td>
+              <td>0.4404</td><td>62.34</td><td class="second">6.126</td>
+              <td>0.6293</td><td>3.603</td><td>3.572</td><td>164.1</td>
+            </tr>
+            <tr>
+              <td class="method-cell">ResShift-15</td>
+              <td>24.48</td><td>0.6803</td><td>0.4169</td>
+              <td>0.3232</td><td>50.77</td><td>8.941</td>
+              <td>0.5371</td><td>2.629</td><td>2.877</td><td>159.7</td>
+            </tr>
+            <tr>
+              <td class="method-cell">OSEDiff-1</td>
+              <td>25.85</td><td class="best">0.7548</td><td class="best">0.2966</td>
+              <td>0.4657</td><td>64.69</td><td>6.464</td>
+              <td>0.6962</td><td>3.939</td><td>3.746</td><td class="best">135.4</td>
+            </tr>
+            <tr>
+              <td class="method-cell">SinSR-1</td>
+              <td>25.83</td><td>0.7157</td><td>0.3655</td>
+              <td>0.3901</td><td>55.64</td><td>6.953</td>
+              <td>0.6447</td><td>3.131</td><td>3.135</td><td>172.7</td>
+            </tr>
+            <tr>
+              <td class="method-cell">VARSR-10</td>
+              <td class="second">26.05</td><td>0.7353</td><td>0.3536</td>
+              <td class="second">0.5361</td><td class="second">68.14</td><td>6.971</td>
+              <td class="second">0.7215</td><td class="second">4.137</td><td>3.480</td><td>156.5</td>
+            </tr>
+            <tr class="ours">
+              <td class="method-cell">VARestorer-1</td>
+              <td>24.31</td><td>0.6894</td><td>0.3584</td>
+              <td class="best">0.5638</td><td class="best">69.49</td><td class="best">5.494</td>
+              <td class="best">0.7810</td><td class="best">4.582</td><td class="best">4.188</td><td>149.7</td>
+            </tr>
+
+            <!-- RealSR -->
+            <tr>
+              <td rowspan="8" class="dataset-cell">RealSR</td>
+              <td class="method-cell">DiffBIR-50</td>
+              <td>23.33</td><td>0.6180</td><td>0.3650</td>
+              <td>0.5583</td><td>69.28</td><td>5.839</td>
+              <td>0.7054</td><td>4.101</td><td>3.760</td><td>130.8</td>
+            </tr>
+            <tr>
+              <td class="method-cell">SeeSR-50</td>
+              <td>23.60</td><td>0.6947</td><td>0.3007</td>
+              <td>0.5437</td><td>69.82</td><td>5.396</td>
+              <td>0.6696</td><td>4.136</td><td>3.789</td><td>125.4</td>
+            </tr>
+            <tr>
+              <td class="method-cell">PASD-20</td>
+              <td class="second">24.83</td><td class="second">0.7247</td><td class="second">0.2709</td>
+              <td>0.4423</td><td>66.93</td><td class="second">5.349</td>
+              <td>0.5815</td><td>3.575</td><td>3.705</td><td>131.9</td>
+            </tr>
+            <tr>
+              <td class="method-cell">ResShift-15</td>
+              <td>23.67</td><td>0.6931</td><td>0.3451</td>
+              <td>0.3538</td><td>56.90</td><td>8.331</td>
+              <td>0.5350</td><td>2.891</td><td>3.111</td><td>129.5</td>
+            </tr>
+            <tr>
+              <td class="method-cell">OSEDiff-1</td>
+              <td>23.59</td><td>0.7074</td><td>0.2920</td>
+              <td>0.4716</td><td>69.08</td><td>5.652</td>
+              <td>0.6685</td><td>4.070</td><td>3.801</td><td class="second">123.5</td>
+            </tr>
+            <tr>
+              <td class="method-cell">SinSR-1</td>
+              <td class="best">24.50</td><td>0.7076</td><td>0.3219</td>
+              <td>0.4045</td><td>61.07</td><td>6.319</td>
+              <td>0.6178</td><td>3.200</td><td>3.299</td><td>140.8</td>
+            </tr>
+            <tr>
+              <td class="method-cell">VARSR-10</td>
+              <td>24.12</td><td>0.7001</td><td>0.3216</td>
+              <td class="second">0.5465</td><td class="second">71.16</td><td>6.063</td>
+              <td class="second">0.7004</td><td class="second">4.148</td><td>3.551</td><td>130.6</td>
+            </tr>
+            <tr class="ours">
+              <td class="method-cell">VARestorer-1</td>
+              <td>22.78</td><td>0.6453</td><td>0.3249</td>
+              <td class="best">0.5655</td><td class="best">71.37</td><td class="best">4.763</td>
+              <td class="best">0.7423</td><td class="best">4.601</td><td class="best">4.180</td><td class="best">117.2</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+        <p class="table-caption">
+          VARestorer delivers the strongest perceptual metrics (MANIQA / MUSIQ / NIQE / CLIPIQA / LIQE / QALIGN) across all three datasets while running at <b>1-step</b> inference, achieving the best RealSR FID as well.
+        </p>
+      </div>
+    </div>
+
+    <!-- Efficiency table -->
+    <div class="columns is-centered has-text-centered" style="margin-top: 2.5rem;">
+      <div class="column is-four-fifths">
+        <h3 class="title is-4">Parameter &amp; Computation Analysis</h3>
+        <div style="overflow-x: auto;">
+        <table class="results-table" style="max-width: 720px;">
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>Trainable Params.</th>
+              <th>Inference Time (s)</th>
+              <th>GFLOPs</th>
+              <th>MANIQA&uarr;</th>
+              <th>MUSIQ&uarr;</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="method-cell">DiffBIR</td><td>380.0M</td><td>10.27</td><td>12,117</td><td>0.5664</td><td>69.87</td></tr>
+            <tr><td class="method-cell">SeeSR</td><td>749.9M</td><td>7.18</td><td>32,928</td><td>0.5036</td><td>68.67</td></tr>
+            <tr><td class="method-cell">PASD</td><td>625.0M</td><td>4.58</td><td>14,562</td><td>0.4371</td><td>67.78</td></tr>
+            <tr><td class="method-cell">ResShift</td><td>118.6M</td><td>1.13</td><td>2,745</td><td>0.3693</td><td>58.90</td></tr>
+            <tr><td class="method-cell">OSEDiff</td><td class="best">8.5M</td><td class="best">0.18</td><td class="best">1,133</td><td>0.4410</td><td>67.96</td></tr>
+            <tr><td class="method-cell">VARSR</td><td>1101.9M</td><td>0.63</td><td>&mdash;</td><td>0.5173</td><td>71.48</td></tr>
+            <tr class="ours">
+              <td class="method-cell">VARestorer</td>
+              <td class="second">27.3M</td>
+              <td class="second">0.23</td>
+              <td class="second">1,536</td>
+              <td class="best">0.5590</td>
+              <td class="best">72.32</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+        <p class="table-caption">
+          With only <b>27.3M</b> trainable parameters and <b>0.23 s / image</b>, VARestorer is ~10&times; faster than VARSR and orders-of-magnitude cheaper than diffusion baselines, while attaining the best perceptual quality.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Qualitative comparison -->
+<section class="section hero is-light" style="padding-top: 40px;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Qualitative Comparisons</h2>
+        <img src="./static/images/qualitative.png" alt="Qualitative comparisons">
+        <div class="figure-caption">
+          <b>Real-world cases.</b> VARestorer recovers sharp petal structures, natural rock and
+          water textures, and clean boundaries with fewer artifacts than diffusion- and GAN-based
+          baselines, despite using <b>only 1 inference step</b>.
+        </div>
+      </div>
+    </div>
+
+    <div class="columns is-centered has-text-centered" style="margin-top: 2.5rem;">
+      <div class="column is-four-fifths">
+        <img src="./static/images/more_qualitative.png" alt="More qualitative comparisons">
+        <div class="figure-caption">
+          <b>More qualitative comparisons.</b> Across metal grates, animal fur, wet petal
+          textures and stone carvings, VARestorer produces consistently sharper structures and
+          richer high-frequency detail.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Ablation -->
+<section class="section" style="padding-top: 40px;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Ablation Studies</h2>
+        <img src="./static/images/ablation.png" alt="Ablation visual">
+        <div class="figure-caption" style="margin-bottom: 1.2rem;">
+          Removing <b>distillation</b>, <b>cross-scale attention</b>, or the <b>KL distribution
+          matching</b> loss each visibly degrades texture fidelity and structural consistency.
+        </div>
+
+        <div style="overflow-x: auto;">
+        <table class="results-table" style="max-width: 620px;">
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>LPIPS&darr;</th>
+              <th>MUSIQ&uarr;</th>
+              <th>NIQE&darr;</th>
+              <th>CLIPIQA&uarr;</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="method-cell">w/o distill</td><td>0.3723</td><td>62.22</td><td>6.283</td><td>0.4794</td></tr>
+            <tr><td class="method-cell">w/o cross-scale</td><td>0.4224</td><td>63.72</td><td>6.029</td><td>0.3910</td></tr>
+            <tr><td class="method-cell">w/o &#x2112;<sub>KL</sub></td><td class="second">0.3214</td><td>69.73</td><td class="best">4.372</td><td>0.6682</td></tr>
+            <tr class="ours">
+              <td class="method-cell">VARestorer (full)</td>
+              <td class="best">0.3131</td>
+              <td class="best">72.32</td>
+              <td class="second">4.410</td>
+              <td class="best">0.7669</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+        <p class="table-caption">
+          Each of the three components&mdash;<b>one-step distillation</b>, <b>cross-scale
+          attention</b> and <b>KL distribution matching</b>&mdash;contributes meaningfully to the
+          final performance on DIV2K-Val.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Frequency analysis -->
+<section class="section hero is-light" style="padding-top: 40px;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Balanced Reconstruction Across Frequencies</h2>
+        <img src="./static/images/frequency.png" alt="Frequency analysis">
+        <div class="figure-caption">
+          VARestorer faithfully reconstructs both <b>high-frequency details</b> (top: flower
+          petals) and <b>low-frequency structures</b> (bottom: desert dunes and sea). Each pair
+          shows the low-quality input on the left and our restored result on the right.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Generalization -->
+<section class="section" style="padding-top: 40px;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Generalization to More Tasks</h2>
+
+        <div style="margin-top: 1rem;">
+          <img src="./static/images/deraining_lowlight.png" alt="Deraining and low-light enhancement">
+          <div class="figure-caption">
+            <b>Deraining &amp; low-light enhancement.</b> With slight fine-tuning, VARestorer
+            transfers its generative prior to tasks beyond blind super-resolution.
+          </div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+          <img src="./static/images/jpeg_artifact.png" alt="JPEG and heavy compression">
+          <div class="figure-caption">
+            <b>Heavy compression, social media and motion blur.</b> VARestorer removes JPEG
+            artifacts and recovers clean textures under diverse in-the-wild degradations.
+          </div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+          <img src="./static/images/saltpepper.png" alt="Salt & Pepper noise removal">
+          <div class="figure-caption">
+            <b>Unseen degradations.</b> Though salt-and-pepper noise is absent from our
+            training pipeline, the distilled generative prior still produces clean outputs.
+          </div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+          <img src="./static/images/highres.png" alt="High-resolution restoration">
+          <div class="figure-caption">
+            <b>High-resolution restoration.</b> VARestorer scales to 1024&times;1024 via
+            fine-tuning and to 1800&times;1200 via tiled inference, preserving fine textures
+            at high resolution.
+          </div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+          <img src="./static/images/showcase.png" alt="Real-world restoration showcase">
+          <div class="figure-caption">
+            <b>In-the-wild restoration showcase.</b> Real low-quality inputs (top row) and
+            VARestorer outputs (bottom row): cars behind blur, landscapes through fog, and
+            heavily compressed pet photos.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Limitations -->
+<section class="section hero is-light" style="padding-top: 40px;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Limitations</h2>
+        <img src="./static/images/failure.png" alt="Failure cases">
+        <div class="figure-caption">
+          Under <b>extreme degradation</b> (e.g., dense noise destroying thin structures like a
+          bicycle frame, or captions drifting on very noisy inputs), VARestorer may hallucinate
+          plausible but inexact content. These cases highlight the limits of one-step
+          restoration when the input signal is insufficient.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BibTeX -->
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>@inproceedings{zhu2026varestorer,
+  title     = {VARestorer: One-Step VAR Distillation for Real-World Image Super-Resolution},
+  author    = {Zhu, Yixuan and Ma, Shilin and Wang, Haolin and Li, Ao and
+               Jing, Yanzhe and Tang, Yansong and Chen, Lei and Lu, Jiwen and Zhou, Jie},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2026},
+  url       = {https://openreview.net/forum?id=T2Oihh7zN8}
+}</code></pre>
+  </div>
+</section>
+
+<footer class="footer" style="padding: 2rem 1.5rem;">
+  <div class="container">
+    <div class="content has-text-centered">
+      <p class="section-note">
+        Page template adapted from
+        <a href="https://nerfies.github.io">Nerfies</a>.
+        Source code on
+        <a href="https://github.com/EternalEvan/VARestorer-project">GitHub</a>.
+      </p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
