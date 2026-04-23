@@ -28,14 +28,57 @@
   <script src="./static/js/index.js"></script>
 
   <style>
-    /* Hero background: solid dark navy for clean contrast. */
+    /* Hero background: Tsinghua purple gradient + soft fade to white at the bottom. */
     .hero.varestorer-hero {
-      background: #1f2a44;
+      background: linear-gradient(160deg, #2e0645 0%, #3d0a5e 55%, #470d6e 100%);
+      position: relative;
     }
+    /* fade-out removed */
     .hero.varestorer-hero .publication-title { color: #fff; }
     .hero.varestorer-hero .publication-authors,
-    .hero.varestorer-hero .publication-venue { color: #f2f2f2; }
-    .hero.varestorer-hero .publication-authors a { color: #9dd9ff !important; }
+    .hero.varestorer-hero .publication-venue { color: #f0e6ff; }
+    .hero.varestorer-hero .publication-authors a { color: #d9b8ff !important; }
+
+    /* Title + logo flex row. */
+    .hero-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      text-align: left;
+    }
+    .hero-title-row .hero-logo {
+      flex-shrink: 0;
+      height: 4rem;
+      border-radius: 8px;
+    }
+    /* Slightly tighten font so the two-line title fits alongside the logo. */
+    .hero.varestorer-hero .publication-title {
+      font-size: 2.4rem !important;
+      line-height: 1.25;
+    }
+    .hero-title-row h1 {
+      text-align: left;
+    }
+    /* Badge row: spacer keeps badge aligned with title text start. */
+    .hero-badge-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 0.55rem;
+    }
+    .hero-badge-spacer {
+      flex-shrink: 0;
+      /* logo is 4:3, height=4rem → width≈5.1rem; add 1rem gap */
+      width: 6.2rem;
+    }
+    @media (max-width: 640px) {
+      .hero-title-row { flex-direction: column; text-align: center; }
+      .hero-title-row h1 { text-align: center; }
+      .hero-badge-row { justify-content: center; }
+      .hero-badge-spacer { display: none; }
+    }
 
     .venue-badge {
       display: inline-block;
@@ -273,13 +316,17 @@
     <div class="container is-max-desktop">
       <div class="columns is-centered">
         <div class="column has-text-centered">
-          <h1 class="title is-1 publication-title">
-            <img src="./static/images/logo.png" alt="VARestorer Logo"
-                 style="height: 1.3em; vertical-align: -0.3em; margin: 0 0.15em;">
-            VARestorer: One-Step VAR Distillation for<br>Real-World Image Super-Resolution
-          </h1>
-
-          <div class="venue-badge">ICLR 2026</div>
+          <div class="hero-title-row">
+            <img src="./static/images/logo-new-2.jpg"
+                 alt="VARestorer Logo" class="hero-logo">
+            <h1 class="title is-1 publication-title">
+              VARestorer: One-Step VAR Distillation<br>for Real-World Image Super-Resolution
+            </h1>
+          </div>
+          <div class="hero-badge-row">
+            <div class="hero-badge-spacer"></div>
+            <div><span class="venue-badge">ICLR 2026</span></div>
+          </div>
 
           <div class="is-size-5 publication-authors" style="margin-top: 1.4rem;">
             <span class="author-block">
