@@ -136,21 +136,15 @@
       color: #555;
     }
 
-    .link-block a.is-hf {
-      background: #ffb300;
-      border-color: #ffb300;
-      color: #222;
+    .hf-logo-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
-    .link-block a.is-hf:hover { background: #ffca3a; border-color: #ffca3a; }
-    .link-block a.is-hf-home {
-      background: rgba(255, 255, 255, 0.12);
-      border-color: rgba(255, 255, 255, 0.25);
-      color: #fff;
-    }
-    .link-block a.is-hf-home:hover {
-      background: rgba(255, 255, 255, 0.2);
-      border-color: rgba(255, 255, 255, 0.35);
-      color: #fff;
+    .hf-logo-icon img {
+      width: 1.05rem;
+      height: 1.05rem;
+      display: block;
     }
 
     .method-card {
@@ -392,15 +386,15 @@
               </span>
               <span class="link-block">
                 <a href="https://huggingface.co/EvanEternal/VARestorer/tree/main/weights"
-                   class="external-link button is-normal is-rounded is-hf">
+                   class="external-link button is-normal is-rounded is-dark">
                   <span class="icon"><i class="fas fa-cloud-download-alt"></i></span>
                   <span>Model</span>
                 </a>
               </span>
               <span class="link-block">
                 <a href="https://huggingface.co/EvanEternal/VARestorer"
-                   class="external-link button is-normal is-rounded is-hf-home">
-                  <span class="icon"><i class="fas fa-book-open"></i></span>
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon hf-logo-icon"><img src="./static/images/hf-logo.svg" alt="Hugging Face logo"></span>
                   <span>Hugging Face</span>
                 </a>
               </span>
