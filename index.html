@@ -60,29 +60,21 @@
     .hero-title-row h1 {
       text-align: left;
     }
-    /* Badge row: spacer keeps badge aligned with title text start. */
-    .hero-badge-row {
+    .hero-meta-line {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 1rem;
-      margin-top: 0.55rem;
-    }
-    .hero-badge-spacer {
-      flex-shrink: 0;
-      /* logo is 4:3, height=4rem → width≈5.1rem; add 1rem gap */
-      width: 6.2rem;
+      gap: 0.8rem;
+      flex-wrap: wrap;
     }
     @media (max-width: 640px) {
       .hero-title-row { flex-direction: column; text-align: center; }
       .hero-title-row h1 { text-align: center; }
-      .hero-badge-row { justify-content: center; }
-      .hero-badge-spacer { display: none; }
     }
 
     .venue-badge {
       display: inline-block;
-      margin-top: 0.75rem;
+      margin-top: 0;
       padding: 0.2em 0.9em;
       border: 1px solid rgba(255, 255, 255, 0.7);
       border-radius: 999px;
@@ -150,6 +142,16 @@
       color: #222;
     }
     .link-block a.is-hf:hover { background: #ffca3a; border-color: #ffca3a; }
+    .link-block a.is-hf-home {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.25);
+      color: #fff;
+    }
+    .link-block a.is-hf-home:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.35);
+      color: #fff;
+    }
 
     .method-card {
       background: #fafafa;
@@ -323,11 +325,6 @@
               VARestorer: One-Step VAR Distillation<br>for Real-World Image Super-Resolution
             </h1>
           </div>
-          <div class="hero-badge-row">
-            <div class="hero-badge-spacer"></div>
-            <div><span class="venue-badge">ICLR 2026</span></div>
-          </div>
-
           <div class="is-size-5 publication-authors" style="margin-top: 1.4rem;">
             <span class="author-block">
               <a href="https://eternalevan.github.io/">Yixuan Zhu</a><sup>*</sup>,
@@ -358,8 +355,9 @@
             </span>
           </div>
 
-          <div class="is-size-5 publication-authors" style="margin-top: 0.4rem;">
+          <div class="is-size-5 publication-authors hero-meta-line" style="margin-top: 0.5rem;">
             <span class="author-block">Tsinghua University</span>
+            <span class="venue-badge">ICLR 2026</span>
           </div>
 
           <div class="is-size-6 publication-authors" style="margin-top: 0.2rem; color: #d9d9d9;">
@@ -397,6 +395,13 @@
                    class="external-link button is-normal is-rounded is-hf">
                   <span class="icon"><i class="fas fa-cloud-download-alt"></i></span>
                   <span>Model</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://huggingface.co/EvanEternal/VARestorer"
+                   class="external-link button is-normal is-rounded is-hf-home">
+                  <span class="icon"><i class="fas fa-book-open"></i></span>
+                  <span>Hugging Face</span>
                 </a>
               </span>
             </div>
